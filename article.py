@@ -20,23 +20,18 @@ class Article:
         with open(f"{dest}/{filename}.md", "w") as f:
             f.write(markdown)
 
+    @staticmethod
+    def get_article_from_url(url: str):
+        url_matcher = re.compile("(.*)blog.naver.com/(.*)/(.*)")
+        matches = url_matcher.match(url)
+        author = matches.group(2)
+        article_id = matches.group(3)
 
-def get_article(url: str) -> Article:
-    url_matcher = re.compile("(.*)blog.naver.com/(.*)/(.*)")
-    matches = url_matcher.match(url)
-    author = matches.group(2)
-    article_id = matches.group(3)
-    print(author, article_id)
+        response = requests.get(f"https://blog.naver.com/PostView.naver?blogId={author}&logNo={article_id}").text
+        iframe_soup = BeautifulSoup(response, 'html.parser')
 
-    r = requests.get(url).text
-    soup = BeautifulSoup(r, 'html.parser')
-    iframe = soup.find_all('iframe')
-
-    response = requests.get("https://blog.naver.com/" + iframe[0].attrs['src']).text
-    iframe_soup = BeautifulSoup(response, 'html.parser')
-
-    return Article(
-        author=author,
-        title=iframe_soup.find('title').text,
-        post=iframe_soup.find('div', attrs={"id": f"post-view{article_id}"})
-    )
+        return Article(
+            author=author,
+            title=iframe_soup.find('title').text,
+            post=iframe_soup.find('div', attrs={"id": f"post-view{article_id}"})
+        )
