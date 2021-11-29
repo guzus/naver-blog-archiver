@@ -1,4 +1,5 @@
 import argparse
+import json
 import re
 from typing import List
 
@@ -8,23 +9,21 @@ from article import Article
 
 
 def get_urls_from_blog_url(blog_url: str) -> List[str]:
-    # TODO: implement here
     author = re.compile("(.*)blog.naver.com/(.*)").match(blog_url).group(2)
-    print(author)
-    # API for getting article ids
-    # https://blog.naver.com/PostTitleListAsync.naver?blogId=guzus&viewdate=&currentPage=1&categoryNo=&parentCategoryNo=&countPerPage=5
-    curr_page = 1
-    count_per_page = 10
-    # while
-    r = requests.get(
-        f"https://blog.naver.com/PostTitleListAsync.naver?blogId={author}currentPage={curr_page}&countPerPage={count_per_page}").json
-    print(r)
-    # r.postList : list of post
-    # r.totalCount : count of post
-    urls = []
-    # url should be : https://blog.naver.com/PostView.naver?blogId={author}&logNo={logNo}
-    print(urls)
-    return urls
+    curr_page, count_per_page, total_count = 1, 5, None
+    article_urls = []
+    while total_count is None or curr_page * count_per_page <= total_count:
+        url = f"https://blog.naver.com/PostTitleListAsync.naver?blogId={author}&currentPage={curr_page}&countPerPage={count_per_page}"
+        response = requests.get(url).text.replace('\\', '\\\\')
+        data = json.loads(response)
+        posts = data.get("postList")
+        total_count = int(data.get("totalCount"))
+        for post in posts:
+            log_no = post.get("logNo")
+            article_url = f"https://blog.naver.com/PostView.naver?blogId={author}&logNo={log_no}"
+            article_urls.append(article_url)
+        curr_page += 1
+    return article_urls
 
 
 def get_urls() -> List[str]:
@@ -47,4 +46,4 @@ if __name__ == "__main__":
             Article.get_article_from_url(url=url).save_file(dest=dest)
     else:
         for url in urls:
-            Article.get_article_from_url(url=url).save_file(dest=dest)
+            Article.get_article_from_simple_url(url=url).save_file(dest=dest)

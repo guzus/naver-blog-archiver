@@ -21,13 +21,24 @@ class Article:
             f.write(markdown)
 
     @staticmethod
-    def get_article_from_url(url: str):
+    def get_article_from_simple_url(url: str):
         url_matcher = re.compile("(.*)blog.naver.com/(.*)/(.*)")
         matches = url_matcher.match(url)
         author = matches.group(2)
         article_id = matches.group(3)
 
-        response = requests.get(f"https://blog.naver.com/PostView.naver?blogId={author}&logNo={article_id}").text
+        url = f"https://blog.naver.com/PostView.naver?blogId={author}&logNo={article_id}"
+        return Article.get_article_from_url(url)
+
+    @staticmethod
+    def get_article_from_url(url: str):
+        print(url)
+        url_matcher = re.compile("(.*)blog.naver.com/PostView.naver\?blogId=(.*)&logNo=(.*)")
+        matches = url_matcher.match(url)
+        author = matches.group(2)
+        article_id = matches.group(3)
+
+        response = requests.get(url).text
         iframe_soup = BeautifulSoup(response, 'html.parser')
 
         return Article(
