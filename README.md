@@ -1,4 +1,4 @@
-# naver-blog-archive
+# naver-blog-archiver
 
 ## Save blog article as md
 ```
